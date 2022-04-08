@@ -1,0 +1,142 @@
+org: lennondias
+app: atendimentohumano
+service: queridometro
+
+frameworkVersion: '3'
+
+custom:
+  secrets: ${file(secrets.json)}
+  usersTable: 'atendimentohumano-queridometro-table-users-${self:provider.stage}'
+  emojisTable: 'atendimentohumano-queridometro-table-emojis-${self:provider.stage}'
+  votesTable: 'atendimentohumano-queridometro-table-votes-${self:provider.stage}'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [UsersTable, Arn]
+            - Fn::GetAtt: [EmojisTable, Arn]
+            - Fn::GetAtt: [VotesTable, Arn]
+        - Effect: Allow
+          Action:
+            - s3:*
+          Resource: '*'
+  environment:
+    TOKEN_SECRET: ${self:custom.secrets.TOKEN_SECRET}
+    USERS_TABLE: ${self:custom.usersTable}
+    EMOJIS_TABLE: ${self:custom.emojisTable}
+    VOTES_TABLE: ${self:custom.votesTable}
+
+functions:
+  users-list:
+    handler: build/functions/users/list.handler
+    events:
+      - http:
+          path: users
+          method: get
+          cors: false
+  users-add:
+    handler: build/functions/users/add.handler
+    events:
+      - http:
+          path: users
+          method: post
+          cors: false
+  emojis-list:
+    handler: build/functions/emojis/list.handler
+    events:
+      - http:
+          path: emojis
+          method: get
+          cors: false
+  emojis-add:
+    handler: build/functions/emojis/add.handler
+    events:
+      - http:
+          path: emojis
+          method: post
+          cors: false
+  vote:
+    handler: build/functions/vote.handler
+    events:
+      - http:
+          path: vote
+          method: post
+          cors: false
+  history:
+    handler: build/functions/history.handler
+    events:
+      - http:
+          path: history
+          method: get
+          cors: false
+          request:
+            parameters:
+              querystrings:
+                date: false
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.usersTable}
+        AttributeDefinitions:
+          - AttributeName: label
+            AttributeType: S
+        KeySchema:
+          - AttributeName: label
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    EmojisTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.emojisTable}
+        AttributeDefinitions:
+          - AttributeName: label
+            AttributeType: S
+        KeySchema:
+          - AttributeName: label
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    VotesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.votesTable}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+plugins:
+  - serverless-offline

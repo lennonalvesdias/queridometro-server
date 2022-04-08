@@ -1,0 +1,33 @@
+{
+  "name": "proxy-project",
+  "version": "1.0.0",
+  "description": "<!-- title: 'AWS Simple HTTP Endpoint example in NodeJS' description: 'This template demonstrates how to make a simple HTTP API with Node.js running on AWS Lambda and API Gateway using the Serverless Framework.' layout: Doc framework: v3 platform: AWS language: nodeJS authorLink: 'https://github.com/serverless' authorName: 'Serverless, inc.' authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4' -->",
+  "main": "handler.js",
+  "scripts": {
+    "tsc-build": "tsc --outDir build",
+    "build": "npm run tsc-build",
+    "clear": "rm -Rf ./build",
+    "deploy": "npm run deploy-dev",
+    "deploy-dev": "npm run build && sls deploy --stage dev",
+    "deploy-hml": "npm run build && sls deploy --stage hml",
+    "deploy-prd": "npm run build && sls deploy --stage prd",
+    "reset": "sls remove && npm run deploy",
+    "off": "npm run build && sls offline",
+    "doctor": "sls doctor"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-sdk": "^2.7.0",
+    "@types/node": "^17.0.23",
+    "@types/uuid": "^8.3.4",
+    "aws-sdk": "^2.1109.0",
+    "serverless-offline": "^8.5.0",
+    "typescript": "^4.6.3"
+  },
+  "dependencies": {
+    "axios": "^0.26.0",
+    "express": "^4.17.3",
+    "uuid": "^8.3.2"
+  }
+}
